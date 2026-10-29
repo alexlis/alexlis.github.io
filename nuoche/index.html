@@ -1,0 +1,739 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f4f7fb">
+<title>挪车车大作战 · Web 原型</title>
+<style>
+:root{
+  --bg:#f4f7fb;--panel:#ffffff;--ink:#1c2938;--muted:#728095;--line:#e1e7ef;
+  --red:#ed5b5b;--red-dark:#c94148;--blue:#5795e5;--teal:#38a99c;--gold:#e9b84e;
+  --purple:#9276dc;--slate:#7890a8;--coral:#e98a62;--green:#299a73;
+  --shadow:0 16px 40px rgba(30,48,75,.08);--radius:22px;
+}
+*{box-sizing:border-box}
+html{min-height:100%;background:var(--bg)}
+body{margin:0;color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:radial-gradient(circle at 12% 0%,#eaf2ff 0,transparent 30%),var(--bg);min-height:100vh}
+button{font:inherit}
+button:focus-visible,[tabindex]:focus-visible{outline:3px solid rgba(79,139,230,.6);outline-offset:3px}
+[hidden]{display:none!important}
+.app{max-width:1180px;margin:0 auto;padding:24px 22px 40px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:28px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.brand-mark{width:46px;height:46px;border-radius:15px;background:linear-gradient(145deg,#ff7c77,#e74e58);display:grid;place-items:center;color:white;box-shadow:0 8px 18px #ed5b5b35;flex:none}
+.brand-mark svg{width:27px;height:27px}
+.brand-title{font-size:18px;font-weight:850;letter-spacing:-.4px}
+.brand-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.top-progress{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:9px 14px;color:#607084;font-size:13px;white-space:nowrap}
+.progress-dot{width:8px;height:8px;background:var(--green);border-radius:50%;box-shadow:0 0 0 4px #299a7318}
+.hero{margin:0 0 22px;display:flex;justify-content:space-between;align-items:flex-end;gap:20px}
+.eyebrow{font-size:11px;font-weight:850;letter-spacing:1.8px;color:#e45a5b;text-transform:uppercase;margin-bottom:9px}
+h1{font-size:clamp(27px,4vw,40px);line-height:1.12;letter-spacing:-1.2px;margin:0;font-weight:900}
+.hero p{color:var(--muted);margin:10px 0 0;line-height:1.65;font-size:14px;max-width:610px}
+.hero-chip{display:flex;align-items:center;gap:8px;border:1px solid #dce7f7;background:#fff;padding:10px 13px;border-radius:13px;font-size:12px;color:#536b89;white-space:nowrap}
+.hero-chip svg{width:17px;height:17px;color:#538fe0}
+.game-layout{display:grid;grid-template-columns:minmax(0,1.28fr) minmax(290px,.72fr);gap:20px;align-items:start}
+.panel{background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.play-panel{padding:22px}
+.panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.panel-heading h2{font-size:16px;margin:0;font-weight:850}
+.level-kicker{font-size:12px;color:var(--muted);margin-top:4px}
+.pill{display:inline-flex;align-items:center;gap:6px;background:#f0f5fc;color:#52719b;border-radius:999px;padding:7px 10px;font-size:11px;font-weight:800;white-space:nowrap}
+.pill-dot{width:6px;height:6px;border-radius:50%;background:#5b9ae7}
+.board-shell{position:relative;width:min(100%,560px);margin:0 auto;padding-right:25px}
+.board{position:relative;width:100%;aspect-ratio:1;border:4px solid #cbd5e0;border-radius:19px;overflow:visible;background:#e8edf3;box-shadow:inset 0 2px 8px #53678012;touch-action:none;user-select:none;-webkit-user-select:none}
+.cell{position:absolute;width:16.6666667%;height:16.6666667%;border-right:1px solid #cbd4df;border-bottom:1px solid #cbd4df;pointer-events:none}
+.cell.exit-row{background:linear-gradient(90deg,#fff2ebaa,#fff2eb66)}
+.exit-arrow{position:absolute;right:0;top:41.6667%;transform:translateY(-50%);font-size:25px;color:var(--red);font-weight:900;line-height:1;filter:drop-shadow(0 2px 2px #ed5b5b20)}
+.exit-label{position:absolute;right:-1px;top:calc(41.6667% + 19px);font-size:9px;letter-spacing:1px;color:#d65b5c;font-weight:900;writing-mode:vertical-rl}
+.car{position:absolute;border:0;background:transparent;padding:3px;cursor:grab;touch-action:none;z-index:3;transition:left .14s ease,top .14s ease,transform .25s ease;outline:none}
+.car.dragging{cursor:grabbing;transition:none;z-index:20}
+.car.selected .car-body{filter:brightness(1.06);box-shadow:0 8px 18px #263c581f,0 0 0 3px #ffffffb8}
+.car.target{z-index:5}
+.car-body{position:absolute;inset:6%;display:block;border-radius:11px;background:linear-gradient(145deg,var(--car-light),var(--car-color));box-shadow:0 5px 10px #29384b22,inset 0 1px 1px #ffffff75;overflow:hidden;border:1px solid #ffffff55}
+.car-glass{position:absolute;background:linear-gradient(135deg,#dff4ff,#8ebbd7);border:1px solid #ffffff80;border-radius:5px;box-shadow:inset 0 1px 2px #ffffff90}
+.car.horizontal .car-glass{left:22%;right:20%;top:17%;bottom:17%}
+.car.vertical .car-glass{left:17%;right:17%;top:22%;bottom:20%}
+.car-front{position:absolute;background:#fff6db;border-radius:3px;opacity:.95}
+.car.horizontal .car-front{right:5%;top:23%;bottom:23%;width:7%}
+.car.vertical .car-front{bottom:5%;left:23%;right:23%;height:7%}
+.car-light{color:#fff}
+.car.target{--car-color:#e64f55;--car-light:#ff8580}
+.car.blue{--car-color:#4b8fe0;--car-light:#8dbaf5}
+.car.teal{--car-color:#2c9e91;--car-light:#72d4c6}
+.car.green{--car-color:#2d9c72;--car-light:#7bd9aa}
+.car.gold{--car-color:#d9a333;--car-light:#f8d77d}
+.car.purple{--car-color:#8b70cf;--car-light:#b6a2f3}
+.car.slate{--car-color:#71869d;--car-light:#aab9c9}
+.car.coral{--car-color:#df805b;--car-light:#ffb08c}
+.car-badge{position:absolute;left:5px;top:50%;transform:translateY(-50%);font-size:9px;font-weight:1000;letter-spacing:.3px;color:#fff;background:#9e273a55;border:1px solid #ffffff70;border-radius:5px;padding:2px 4px;line-height:1}
+.car.vertical .car-badge{left:50%;top:5px;transform:translateX(-50%);writing-mode:horizontal-tb}
+.car.target .car-badge{background:#a92e3755}
+.car.hinted .car-body{outline:3px solid #f6ca50;outline-offset:1px;animation:pulseHint .85s ease-in-out infinite alternate}
+.hint-arrow{position:absolute;z-index:2;left:50%;top:50%;transform:translate(-50%,-50%);font-size:22px;color:#fff;background:#1c2938dd;border:2px solid #fff;border-radius:999px;width:31px;height:31px;display:grid;place-items:center;box-shadow:0 4px 10px #1c293844;pointer-events:none}
+.car.won{transform:translateX(112%)}
+@keyframes pulseHint{from{filter:drop-shadow(0 0 0 #f6ca5000)}to{filter:drop-shadow(0 0 7px #f6ca50aa)}}
+.board-note{display:flex;justify-content:space-between;align-items:center;gap:10px;color:var(--muted);font-size:11px;margin:15px 1px 0}
+.board-note span:first-child{display:flex;align-items:center;gap:6px}
+.board-note svg{width:15px;height:15px;color:#6b9ce0}
+.level-strip{display:flex;gap:8px;overflow-x:auto;padding:18px 0 1px;scrollbar-width:thin}
+.level-chip{flex:none;min-width:56px;min-height:53px;border:1px solid var(--line);background:#fff;border-radius:13px;color:#6e7c8f;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-weight:850;font-size:13px}
+.level-chip small{font-size:9px;color:#d7a32b;letter-spacing:-1px}
+.level-chip.active{background:#eaf2ff;border-color:#78a9ef;color:#326db8;box-shadow:0 0 0 2px #dbeaff}
+.level-chip.done{border-color:#d5eadf}
+.level-chip:disabled{opacity:.45;cursor:not-allowed}
+.side-stack{display:grid;gap:16px}
+.stats-panel{padding:21px}
+.side-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px}
+.side-title h2{font-size:15px;margin:0;font-weight:850}
+.side-title span{font-size:11px;color:var(--muted)}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat-card{background:#f7f9fc;border:1px solid #edf1f6;border-radius:15px;padding:14px}
+.stat-label{font-size:11px;color:var(--muted);margin-bottom:7px}
+.stat-value{font-size:26px;font-weight:900;letter-spacing:-1px;line-height:1.1}
+.stat-sub{font-size:10px;color:#8b98a8;margin-top:5px}
+.stars-row{display:flex;gap:3px;font-size:18px;line-height:1}
+.star{color:#d7dee8}
+.star.earned{color:#e8b33f}
+.star.live{color:#f0cc69}
+.goal-line{margin-top:15px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px;color:var(--muted)}
+.goal-line strong{color:#52647c}
+.button-stack{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:18px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:45px;border-radius:13px;border:1px solid var(--line);background:#fff;color:#506076;font-weight:800;font-size:12px;cursor:pointer;transition:transform .12s,box-shadow .12s,background .12s}
+.btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 5px 12px #29384b10}
+.btn:active:not(:disabled){transform:translateY(0)}
+.btn svg{width:16px;height:16px}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+.btn.primary{grid-column:1/-1;background:linear-gradient(135deg,#ed6265,#df4b54);border-color:#e34f58;color:#fff;box-shadow:0 7px 15px #e650502b}
+.btn.primary:hover:not(:disabled){box-shadow:0 9px 20px #e6505040}
+.btn.hint-btn{background:#fff8e7;border-color:#f5e5b6;color:#9a6d15}
+.hint-text{font-size:11px;color:#718096;line-height:1.6;margin:13px 1px 0;min-height:18px}
+.instructions{padding:20px 21px}
+.instructions h2{font-size:14px;margin:0 0 14px}
+.instruction{display:flex;align-items:flex-start;gap:10px;margin:11px 0;color:#637286;font-size:12px;line-height:1.55}
+.instruction-icon{width:28px;height:28px;border-radius:9px;background:#eef4fd;color:#4c88d5;display:grid;place-items:center;flex:none}
+.instruction-icon svg{width:15px;height:15px}
+.instruction strong{display:block;color:#33445a;font-size:12px;margin-bottom:1px}
+.footer-note{margin-top:22px;text-align:center;font-size:11px;color:#98a4b3;line-height:1.6}
+.toast{position:fixed;z-index:30;left:50%;bottom:22px;transform:translate(-50%,20px);opacity:0;pointer-events:none;transition:all .2s;background:#1e2a3a;color:white;padding:12px 17px;border-radius:13px;box-shadow:0 10px 25px #15233735;font-size:12px;max-width:calc(100vw - 32px);text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.modal-backdrop{position:fixed;inset:0;z-index:50;background:#1422358c;backdrop-filter:blur(6px);display:grid;place-items:center;padding:18px}
+.modal{width:min(100%,390px);background:white;border-radius:25px;padding:29px 25px 24px;text-align:center;box-shadow:0 25px 80px #07172d40;animation:popIn .24s ease-out}
+@keyframes popIn{from{transform:translateY(12px) scale(.97);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+.win-icon{width:68px;height:68px;border-radius:22px;background:linear-gradient(145deg,#fff1c5,#ffe3a0);display:grid;place-items:center;font-size:34px;margin:0 auto 15px}
+.modal h2{margin:0;font-size:25px;letter-spacing:-.6px}
+.modal p{margin:10px 0 17px;color:var(--muted);font-size:13px;line-height:1.6}
+.modal-stars{display:flex;justify-content:center;gap:8px;margin:15px 0 21px;font-size:34px}
+.modal-stars span{color:#e8b33f;filter:drop-shadow(0 3px 3px #e8b33f25)}
+.modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.modal-actions .btn{min-height:47px}
+.modal-actions .btn.primary{grid-column:auto}
+@media(max-width:860px){
+  .app{max-width:720px;padding:18px 16px 30px}
+  .game-layout{grid-template-columns:1fr}
+  .play-panel{padding:18px}
+  .board-shell{width:min(100%,540px)}
+  .side-stack{grid-template-columns:1fr 1fr;align-items:start}
+  .stats-panel,.instructions{padding:18px}
+}
+@media(max-width:560px){
+  .app{padding:14px 12px 28px}
+  .topbar{margin-bottom:22px}
+  .brand-mark{width:40px;height:40px;border-radius:13px}
+  .brand-title{font-size:16px}
+  .brand-sub{font-size:11px}
+  .top-progress{font-size:11px;padding:8px 10px;gap:7px}
+  .hero{display:block;margin-bottom:17px}
+  .hero p{font-size:13px;margin-top:8px}
+  .hero-chip{display:none}
+  .play-panel{padding:14px;border-radius:19px}
+  .panel-heading{margin-bottom:12px}
+  .panel-heading h2{font-size:14px}
+  .board-shell{padding-right:20px}
+  .board{border-width:3px;border-radius:15px}
+  .car{padding:2px}
+  .car-body{border-radius:8px}
+  .exit-arrow{font-size:20px}
+  .exit-label{font-size:8px}
+  .board-note{font-size:10px;margin-top:11px}
+  .level-strip{padding-top:14px;gap:6px}
+  .level-chip{min-width:51px;min-height:48px;border-radius:11px}
+  .side-stack{grid-template-columns:1fr;gap:12px}
+  .stats-panel,.instructions{padding:17px;border-radius:19px}
+  .stat-value{font-size:24px}
+  .button-stack{margin-top:14px}
+  .footer-note{margin-top:17px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 14.5 6.7 9a2 2 0 0 1 1.9-1.4h6.8A2 2 0 0 1 17.3 9l1.7 5.5v3H5v-3Z" fill="currentColor" opacity=".95"/><path d="m7.3 11.5 1-2.6h7.4l1 2.6H7.3Z" fill="#ed5b5b"/><path d="M6.5 15.5h11M7 18v1.3M17 18v1.3" stroke="#b82d3b" stroke-width="1.6" stroke-linecap="round"/><circle cx="7.3" cy="15.2" r="1.1" fill="#34465c"/><circle cx="16.7" cy="15.2" r="1.1" fill="#34465c"/></svg>
+      </div>
+      <div>
+        <div class="brand-title">挪车车大作战</div>
+        <div class="brand-sub">停车场解谜 · 轻松动脑</div>
+      </div>
+    </div>
+    <div class="top-progress"><span class="progress-dot"></span><span id="top-progress-text">已通关 0 / 5 关</span></div>
+  </header>
+
+  <section class="hero">
+    <div>
+      <div class="eyebrow">PARKING PUZZLE</div>
+      <h1>挪出一条路，<br>让红车顺利离场。</h1>
+      <p>拖动挡路的车辆，腾出出口通道。少走几步，拿下三星！</p>
+    </div>
+    <div class="hero-chip">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 3.5 14.6 8.8l5.9.9-4.2 4.1 1 5.8-5.3-2.8-5.3 2.8 1-5.8-4.2-4.1 5.9-.9L12 3.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      5 个示例关卡 · 支持触屏
+    </div>
+  </section>
+
+  <main class="game-layout">
+    <section class="panel play-panel">
+      <div class="panel-heading">
+        <div>
+          <h2 id="level-heading">第 1 关 · 初来乍到</h2>
+          <div class="level-kicker" id="level-description">先学会把挡路的车移开</div>
+        </div>
+        <div class="pill"><span class="pill-dot"></span><span id="difficulty-label">入门</span></div>
+      </div>
+
+      <div class="board-shell">
+        <div id="board" class="board" role="application" aria-label="停车场棋盘。拖动车辆让红色目标车驶出。" tabindex="0"></div>
+        <div class="exit-arrow" aria-hidden="true">➜</div>
+        <div class="exit-label" aria-hidden="true">出口</div>
+      </div>
+      <div class="board-note">
+        <span><svg viewBox="0 0 24 24" fill="none"><path d="M12 3.5a8.5 8.5 0 1 0 8.5 8.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M15.5 3.5H21V9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>一次拖动算一步</span>
+        <span>棋盘 6 × 6</span>
+      </div>
+      <div class="level-strip" id="level-strip" aria-label="选择关卡"></div>
+    </section>
+
+    <aside class="side-stack">
+      <section class="panel stats-panel">
+        <div class="side-title">
+          <h2>本关进度</h2>
+          <span id="chapter-label">第一章 · 新手停车场</span>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-label">已用步数</div>
+            <div class="stat-value" id="moves-value">0</div>
+            <div class="stat-sub">每次成功移动计一步</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">最优解参考</div>
+            <div class="stat-value" id="par-value">2<span style="font-size:12px;color:#8b98a8;font-weight:700"> 步</span></div>
+            <div class="stat-sub">求解器计算的最少步数</div>
+          </div>
+        </div>
+        <div class="goal-line">
+          <span>三星挑战</span><strong id="star-goal">≤ 3 步</strong>
+        </div>
+        <div class="goal-line" style="margin-top:11px">
+          <span>当前星级进度</span>
+          <div class="stars-row" id="live-stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+        </div>
+        <div class="button-stack">
+          <button class="btn" id="undo-btn" type="button" title="撤销上一步">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M9 8 4 12l5 4M4.5 12H14a5.5 5.5 0 0 1 0 11" transform="translate(0 -4)" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>撤销
+          </button>
+          <button class="btn hint-btn" id="hint-btn" type="button">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M9 18h6M10 21h4M8.3 14.5A6 6 0 1 1 15.7 14.5c-.9.7-1.2 1.3-1.2 2h-5c0-.7-.3-1.3-1.2-2Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>提示
+          </button>
+          <button class="btn" id="restart-btn" type="button">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 11a8 8 0 0 1 13.7-5.7L20 7.5M20 3.5v4h-4M20 13a8 8 0 0 1-13.7 5.7L4 16.5m0 4v-4h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>重新开始
+          </button>
+          <button class="btn primary" id="next-btn" type="button" disabled>
+            下一关 <svg viewBox="0 0 24 24" fill="none"><path d="M4 12h15m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div class="hint-text" id="hint-text" aria-live="polite">卡关时点击“提示”，查看下一步建议。</div>
+      </section>
+
+      <section class="panel instructions">
+        <h2>怎么玩？</h2>
+        <div class="instruction">
+          <div class="instruction-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M8 5v14m0-14L5 8m3-3 3 3M16 19V5m0 14 3-3m-3 3-3-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div><strong>沿车辆方向拖动</strong>横向车只能左右移动，纵向车只能上下移动。</div>
+        </div>
+        <div class="instruction">
+          <div class="instruction-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12h15m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div><strong>给红车让出通道</strong>清除红车前方的阻挡，红车就能从右侧出口离场。</div>
+        </div>
+        <div class="instruction">
+          <div class="instruction-icon"><svg viewBox="0 0 24 24" fill="none"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+          <div><strong>步数越少，星级越高</strong>卡住时可以撤销，或使用提示寻找下一步。</div>
+        </div>
+      </section>
+    </aside>
+  </main>
+  <div class="footer-note">原型版本 0.1 · 无需登录 · 进度保存在当前浏览器<br>这是独立原创的停车滑动解谜原型，关卡和视觉均为演示内容。</div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="modal-backdrop" id="win-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="win-icon" id="modal-icon">🏁</div>
+    <h2 id="modal-title">成功驶出！</h2>
+    <p id="modal-copy">漂亮！你为红车清出了通道。</p>
+    <div class="modal-stars" id="modal-stars"><span>★</span><span>★</span><span>★</span></div>
+    <div class="modal-actions">
+      <button class="btn" id="replay-btn" type="button">再玩一次</button>
+      <button class="btn primary" id="modal-next-btn" type="button">下一关 →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+const GRID = 6;
+const STORAGE_KEY = "nuoche-web-prototype-v1";
+const LEVELS = [
+  {
+    id:"level-1", title:"初来乍到", chapter:"第一章 · 新手停车场", difficulty:"入门",
+    description:"先学会把挡路的车移开。", parMoves:2,
+    cars:[
+      {id:"T",name:"红色目标车",x:0,y:2,len:2,dir:"H",color:"target"},
+      {id:"A",name:"蓝色小车",x:2,y:1,len:2,dir:"V",color:"blue"},
+      {id:"B",name:"青色小车",x:0,y:0,len:2,dir:"H",color:"teal"},
+      {id:"C",name:"黄色小车",x:3,y:5,len:2,dir:"H",color:"gold"}
+    ]
+  },
+  {
+    id:"level-2", title:"上下腾挪", chapter:"第一章 · 新手停车场", difficulty:"简单",
+    description:"挡路车被卡住了？先看看它上方的空间。", parMoves:3,
+    cars:[
+      {id:"T",name:"红色目标车",x:0,y:2,len:2,dir:"H",color:"target"},
+      {id:"A",name:"蓝色长车",x:2,y:2,len:2,dir:"V",color:"blue"},
+      {id:"H",name:"紫色横车",x:2,y:0,len:2,dir:"H",color:"purple"},
+      {id:"B",name:"黄色横车",x:2,y:4,len:2,dir:"H",color:"gold"}
+    ]
+  },
+  {
+    id:"level-3", title:"双重阻挡", chapter:"第二章 · 拥堵街区", difficulty:"进阶",
+    description:"两辆车挡住出口，找出它们能移动的方向。", parMoves:4,
+    cars:[
+      {id:"T",name:"红色目标车",x:0,y:2,len:2,dir:"H",color:"target"},
+      {id:"H1",name:"紫色横车",x:2,y:0,len:2,dir:"H",color:"purple"},
+      {id:"A",name:"蓝色长车",x:2,y:1,len:2,dir:"V",color:"blue"},
+      {id:"H2",name:"青色横车",x:4,y:0,len:2,dir:"H",color:"teal"},
+      {id:"B",name:"绿色长车",x:4,y:2,len:2,dir:"V",color:"green"},
+      {id:"C",name:"黄色横车",x:4,y:4,len:2,dir:"H",color:"gold"}
+    ]
+  },
+  {
+    id:"level-4", title:"窄道脱困", chapter:"第二章 · 拥堵街区", difficulty:"挑战",
+    description:"停车位越来越紧张，留意上下两侧的空间。", parMoves:5,
+    cars:[
+      {id:"T",name:"红色目标车",x:0,y:2,len:2,dir:"H",color:"target"},
+      {id:"A",name:"蓝色长车",x:2,y:1,len:2,dir:"V",color:"blue"},
+      {id:"H1",name:"紫色横车",x:2,y:0,len:2,dir:"H",color:"purple"},
+      {id:"B",name:"青色长车",x:3,y:2,len:2,dir:"V",color:"teal"},
+      {id:"D",name:"黄色横车",x:3,y:4,len:2,dir:"H",color:"gold"},
+      {id:"C",name:"绿色长车",x:4,y:1,len:2,dir:"V",color:"green"},
+      {id:"H2",name:"灰色横车",x:4,y:0,len:2,dir:"H",color:"slate"}
+    ]
+  },
+  {
+    id:"level-5", title:"停车大师", chapter:"第二章 · 拥堵街区", difficulty:"困难",
+    description:"多辆车互相牵制，耐心规划每一步。", parMoves:8,
+    cars:[
+      {id:"T",name:"红色目标车",x:0,y:2,len:2,dir:"H",color:"target"},
+      {id:"H1",name:"紫色横车",x:2,y:0,len:2,dir:"H",color:"purple"},
+      {id:"A",name:"蓝色长车",x:2,y:1,len:2,dir:"V",color:"blue"},
+      {id:"H2",name:"青色横车",x:4,y:0,len:2,dir:"H",color:"teal"},
+      {id:"B",name:"绿色长车",x:4,y:2,len:2,dir:"V",color:"green"},
+      {id:"C",name:"黄色横车",x:4,y:4,len:2,dir:"H",color:"gold"},
+      {id:"D",name:"橙色横车",x:1,y:4,len:2,dir:"H",color:"coral"},
+      {id:"E",name:"灰色长车",x:0,y:0,len:2,dir:"V",color:"slate"}
+    ]
+  }
+];
+
+const board = document.getElementById("board");
+let currentLevel = 0;
+let positions = initialPositions(LEVELS[0]);
+let history = [];
+let won = false;
+let drag = null;
+let selectedCar = null;
+let hintMove = null;
+let toastTimer = null;
+let progress = loadProgress();
+
+function initialPositions(level){ return level.cars.map(car => [car.x,car.y]); }
+function clonePositions(value){ return value.map(p => [p[0],p[1]]); }
+function current(){ return LEVELS[currentLevel]; }
+function stateToPositions(state){
+  const out=[];
+  for(let i=0;i<state.length;i+=2) out.push([state[i],state[i+1]]);
+  return out;
+}
+function stateKey(state){ return state.join(","); }
+
+function loadProgress(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw) return {unlocked:0,results:{}};
+    const parsed=JSON.parse(raw);
+    return {
+      unlocked:Math.max(0,Math.min(LEVELS.length-1,Number(parsed.unlocked)||0)),
+      results:parsed.results && typeof parsed.results==="object" ? parsed.results : {}
+    };
+  }catch(_){ return {unlocked:0,results:{}}; }
+}
+function saveProgress(){
+  try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(progress)); }catch(_){}
+}
+function occupancy(level,ps,skipIndex=-1){
+  const occupied=new Set();
+  level.cars.forEach((car,i)=>{
+    if(i===skipIndex) return;
+    const [x,y]=ps[i];
+    for(let j=0;j<car.len;j++){
+      const cx=car.dir==="H"?x+j:x;
+      const cy=car.dir==="V"?y+j:y;
+      occupied.add(cx+","+cy);
+    }
+  });
+  return occupied;
+}
+function canPlace(level,ps,index,nx,ny){
+  const car=level.cars[index];
+  if(car.dir==="H"){
+    if(nx<0 || nx+car.len>GRID || ny<0 || ny>=GRID) return false;
+  }else{
+    if(ny<0 || ny+car.len>GRID || nx<0 || nx>=GRID) return false;
+  }
+  const occupied=occupancy(level,ps,index);
+  for(let j=0;j<car.len;j++){
+    const cx=car.dir==="H"?nx+j:nx;
+    const cy=car.dir==="V"?ny+j:ny;
+    if(occupied.has(cx+","+cy)) return false;
+  }
+  return true;
+}
+function clampCoordinate(level,ps,index,origin,desired){
+  const car=level.cars[index];
+  const sign=Math.sign(desired-origin);
+  if(!sign) return origin;
+  let value=origin;
+  for(let c=origin+sign;sign>0?c<=desired:c>=desired;c+=sign){
+    const nx=car.dir==="H"?c:ps[index][0];
+    const ny=car.dir==="V"?c:ps[index][1];
+    if(!canPlace(level,ps,index,nx,ny)) break;
+    value=c;
+  }
+  return value;
+}
+function isSolved(level,ps){
+  const target=level.cars.findIndex(car=>car.id==="T");
+  return target>=0 && ps[target][0]===GRID-level.cars[target].len;
+}
+
+/* BFS solver: one move is one continuous slide of a car to any reachable cell. */
+function solveState(level,startPositions){
+  const start=startPositions.flat();
+  const startKey=stateKey(start);
+  const targetIndex=level.cars.findIndex(car=>car.id==="T");
+  const queue=[start];
+  const seen=new Map([[startKey,{prev:null,move:null}]]);
+  let goalKey=null;
+  for(let head=0;head<queue.length;head++){
+    const state=queue[head];
+    const key=stateKey(state);
+    if(state[targetIndex*2]===GRID-level.cars[targetIndex].len){goalKey=key;break;}
+    const ps=stateToPositions(state);
+    for(let i=0;i<level.cars.length;i++){
+      const car=level.cars[i];
+      const [x,y]=ps[i];
+      const coord=car.dir==="H"?x:y;
+      for(const sign of [-1,1]){
+        for(let c=coord+sign;sign>0?c<=GRID-car.len:c>=0;c+=sign){
+          const nx=car.dir==="H"?c:x;
+          const ny=car.dir==="V"?c:y;
+          if(!canPlace(level,ps,i,nx,ny)) break;
+          const next=state.slice();
+          next[i*2]=nx; next[i*2+1]=ny;
+          const nextKey=stateKey(next);
+          if(!seen.has(nextKey)){
+            seen.set(nextKey,{prev:key,move:{carIndex:i,x:nx,y:ny}});
+            queue.push(next);
+          }
+        }
+      }
+    }
+  }
+  if(!goalKey) return null;
+  const path=[];
+  let cursor=goalKey;
+  while(seen.get(cursor).prev!==null){
+    const node=seen.get(cursor);
+    path.push(node.move);
+    cursor=node.prev;
+  }
+  return path.reverse();
+}
+function getStars(moves,par){
+  if(moves<=par+1) return 3;
+  if(moves<=par+3) return 2;
+  return 1;
+}
+function currentMoves(){ return history.length; }
+function formatStars(n){ return "★".repeat(n)+"☆".repeat(3-n); }
+function showToast(message){
+  const el=document.getElementById("toast");
+  el.textContent=message;el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove("show"),2100);
+}
+
+function renderBoard(){
+  const level=current();
+  let markup="";
+  for(let y=0;y<GRID;y++){
+    for(let x=0;x<GRID;x++){
+      markup+=`<div class="cell ${y===2?"exit-row":""}" style="left:${x/GRID*100}%;top:${y/GRID*100}%;"></div>`;
+    }
+  }
+  level.cars.forEach((car,i)=>{
+    let [x,y]=positions[i];
+    if(drag && drag.carIndex===i){
+      if(car.dir==="H") x=drag.previewCoord;
+      else y=drag.previewCoord;
+    }
+    const isTarget=car.id==="T";
+    const isHint=hintMove && hintMove.carIndex===i && !won;
+    const classes=["car",car.dir==="H"?"horizontal":"vertical",car.color];
+    if(isTarget) classes.push("target");
+    if(isHint) classes.push("hinted");
+    if(selectedCar===i) classes.push("selected");
+    if(drag && drag.carIndex===i) classes.push("dragging");
+    if(won && isTarget) classes.push("won");
+    const left=x/GRID*100,top=y/GRID*100,width=car.dir==="H"?car.len/GRID*100:100/GRID,height=car.dir==="V"?car.len/GRID*100:100/GRID;
+    const arrow=hintMove && hintMove.carIndex===i ? hintMove.arrow : "";
+    markup+=`<div class="${classes.join(" ")}" role="button" tabindex="0" data-index="${i}" aria-label="${car.name}，${car.dir==="H"?"横向":"纵向"}车辆" style="left:${left}%;top:${top}%;width:${width}%;height:${height}%;">
+      <span class="car-body"><span class="car-glass"></span><span class="car-front"></span>${isTarget?'<span class="car-badge">GO</span>':""}</span>
+      ${isHint?`<span class="hint-arrow" aria-hidden="true">${arrow}</span>`:""}
+    </div>`;
+  });
+  board.innerHTML=markup;
+}
+function renderLevels(){
+  const strip=document.getElementById("level-strip");
+  strip.innerHTML=LEVELS.map((level,i)=>{
+    const result=progress.results[level.id];
+    const locked=i>progress.unlocked;
+    const stars=result?`<small>${"★".repeat(result.stars)}${"☆".repeat(3-result.stars)}</small>`:`<small>${locked?"🔒":"未通关"}</small>`;
+    return `<button class="level-chip ${i===currentLevel?"active":""} ${result?"done":""}" type="button" data-level="${i}" ${locked?"disabled":""} aria-label="第 ${i+1} 关${locked?"，未解锁":""}"><span>${String(i+1).padStart(2,"0")}</span>${stars}</button>`;
+  }).join("");
+}
+function renderStats(){
+  const level=current();
+  const moves=currentMoves();
+  document.getElementById("level-heading").textContent=`第 ${currentLevel+1} 关 · ${level.title}`;
+  document.getElementById("level-description").textContent=level.description;
+  document.getElementById("difficulty-label").textContent=level.difficulty;
+  document.getElementById("chapter-label").textContent=level.chapter;
+  document.getElementById("moves-value").textContent=moves;
+  document.getElementById("par-value").innerHTML=`${level.parMoves}<span style="font-size:12px;color:#8b98a8;font-weight:700"> 步</span>`;
+  document.getElementById("star-goal").textContent=`≤ ${level.parMoves+1} 步`;
+  let earned=0;
+  if(won) earned=getStars(moves,level.parMoves);
+  else if(moves>0) earned=Math.min(3,getStars(moves,level.parMoves));
+  document.getElementById("live-stars").innerHTML=[1,2,3].map(n=>`<span class="star ${n<=earned?(won?"earned":"live"):""}">★</span>`).join("");
+  const completed=Object.keys(progress.results).length;
+  document.getElementById("top-progress-text").textContent=`已通关 ${completed} / ${LEVELS.length} 关`;
+  document.getElementById("undo-btn").disabled=history.length===0 || won;
+  document.getElementById("restart-btn").disabled=won && history.length===0;
+  document.getElementById("next-btn").disabled=!won || currentLevel>=LEVELS.length-1;
+  if(hintMove && !won){
+    document.getElementById("hint-text").textContent=hintMove.message;
+  }else if(won){
+    document.getElementById("hint-text").textContent="通关成功！可以继续挑战下一关。";
+  }else{
+    document.getElementById("hint-text").textContent="卡关时点击“提示”，查看下一步建议。";
+  }
+  document.getElementById("win-modal").hidden=!won;
+  if(won){
+    const stars=getStars(moves,level.parMoves);
+    const isLast=currentLevel===LEVELS.length-1;
+    document.getElementById("modal-icon").textContent=isLast?"🏆":"🏁";
+    document.getElementById("modal-title").textContent=isLast?"全部通关！":"成功驶出！";
+    document.getElementById("modal-copy").textContent=`本关用了 ${moves} 步，获得 ${stars} 颗星。${isLast?"你已经完成全部示例关卡！":"准备好继续挑战下一关了吗？"}`;
+    document.getElementById("modal-stars").innerHTML=[1,2,3].map(n=>`<span style="opacity:${n<=stars?1:.22}">★</span>`).join("");
+    document.getElementById("modal-next-btn").textContent=isLast?"完成挑战":"下一关 →";
+    document.getElementById("modal-next-btn").disabled=isLast;
+  }
+}
+function renderAll(){ renderBoard();renderLevels();renderStats(); }
+
+function commitMove(index,newCoord){
+  if(won) return;
+  const level=current();
+  const car=level.cars[index];
+  const oldCoord=car.dir==="H"?positions[index][0]:positions[index][1];
+  if(newCoord===oldCoord) return;
+  const nx=car.dir==="H"?newCoord:positions[index][0];
+  const ny=car.dir==="V"?newCoord:positions[index][1];
+  if(!canPlace(level,positions,index,nx,ny)) return;
+  history.push(clonePositions(positions));
+  positions=clonePositions(positions);
+  positions[index]=[nx,ny];
+  hintMove=null;
+  selectedCar=index;
+  if(isSolved(level,positions)) finishLevel();
+  renderAll();
+}
+function finishLevel(){
+  won=true;
+  const level=current();
+  const moves=currentMoves();
+  const stars=getStars(moves,level.parMoves);
+  const old=progress.results[level.id];
+  progress.results[level.id]={
+    stars:Math.max(old?old.stars:0,stars),
+    bestMoves:old?Math.min(old.bestMoves||moves,moves):moves
+  };
+  progress.unlocked=Math.max(progress.unlocked,Math.min(LEVELS.length-1,currentLevel+1));
+  saveProgress();
+}
+function selectLevel(index){
+  if(index<0 || index>=LEVELS.length) return;
+  if(index>progress.unlocked){showToast("先完成前面的关卡，就能解锁这里。");return;}
+  currentLevel=index;positions=initialPositions(current());history=[];won=false;drag=null;selectedCar=null;hintMove=null;
+  renderAll();
+}
+function restartLevel(){
+  if(won){won=false;}
+  positions=initialPositions(current());history=[];drag=null;selectedCar=null;hintMove=null;
+  renderAll();showToast("已恢复本关初始布局。");
+}
+function undoMove(){
+  if(won || !history.length) return;
+  positions=history.pop();drag=null;hintMove=null;selectedCar=null;
+  renderAll();
+}
+function showHint(){
+  if(won) return;
+  const path=solveState(current(),positions);
+  if(!path || !path.length){showToast("当前局面没有找到可用解法，请重新开始本关。");return;}
+  const move=path[0];
+  const car=current().cars[move.carIndex];
+  const from=car.dir==="H"?positions[move.carIndex][0]:positions[move.carIndex][1];
+  const to=car.dir==="H"?move.x:move.y;
+  const delta=to-from;
+  const direction=car.dir==="H"?(delta<0?"向左":"向右"):(delta<0?"向上":"向下");
+  const arrow=car.dir==="H"?(delta<0?"←":"→"):(delta<0?"↑":"↓");
+  hintMove={carIndex:move.carIndex,x:move.x,y:move.y,arrow,message:`提示：将「${car.name}」${direction}移动 ${Math.abs(delta)} 格。`};
+  selectedCar=move.carIndex;
+  renderAll();
+}
+function handlePointerDown(event){
+  const el=event.target.closest(".car");
+  if(!el || won) return;
+  const index=Number(el.dataset.index);
+  const car=current().cars[index];
+  if(!car) return;
+  event.preventDefault();
+  selectedCar=index;
+  hintMove=null;
+  const rect=board.getBoundingClientRect();
+  const cellSize=(rect.width-8)/GRID;
+  const originCoord=car.dir==="H"?positions[index][0]:positions[index][1];
+  drag={carIndex:index,pointerId:event.pointerId,startClientX:event.clientX,startClientY:event.clientY,originCoord,previewCoord:originCoord,cellSize};
+  try{board.setPointerCapture(event.pointerId);}catch(_){}
+  renderAll();
+}
+function handlePointerMove(event){
+  if(!drag || event.pointerId!==drag.pointerId || won) return;
+  const car=current().cars[drag.carIndex];
+  const pixels=car.dir==="H"?event.clientX-drag.startClientX:event.clientY-drag.startClientY;
+  const delta=Math.round(pixels/drag.cellSize);
+  const desired=drag.originCoord+delta;
+  drag.previewCoord=clampCoordinate(current(),positions,drag.carIndex,drag.originCoord,desired);
+  renderBoard();
+}
+function handlePointerUp(event){
+  if(!drag || event.pointerId!==drag.pointerId) return;
+  const active=drag;
+  const finalCoord=active.previewCoord;
+  drag=null;
+  if(finalCoord!==active.originCoord) commitMove(active.carIndex,finalCoord);
+  else renderAll();
+}
+function handleKeyDown(event){
+  const el=event.target.closest(".car");
+  if(!el || won) return;
+  const index=Number(el.dataset.index);
+  const car=current().cars[index];
+  const map={ArrowLeft:-1,ArrowRight:1,ArrowUp:-1,ArrowDown:1};
+  const key=event.key;
+  if(car.dir==="H" && !(key==="ArrowLeft"||key==="ArrowRight")) return;
+  if(car.dir==="V" && !(key==="ArrowUp"||key==="ArrowDown")) return;
+  if(!(key in map)) return;
+  event.preventDefault();
+  const from=car.dir==="H"?positions[index][0]:positions[index][1];
+  const desired=from+map[key];
+  const coord=clampCoordinate(current(),positions,index,from,desired);
+  if(coord!==from) commitMove(index,coord);
+}
+board.addEventListener("pointerdown",handlePointerDown);
+board.addEventListener("pointermove",handlePointerMove);
+board.addEventListener("pointerup",handlePointerUp);
+board.addEventListener("pointercancel",handlePointerUp);
+board.addEventListener("keydown",handleKeyDown);
+
+document.getElementById("level-strip").addEventListener("click",event=>{
+  const button=event.target.closest("[data-level]");
+  if(button && !button.disabled) selectLevel(Number(button.dataset.level));
+});
+document.getElementById("undo-btn").addEventListener("click",undoMove);
+document.getElementById("restart-btn").addEventListener("click",restartLevel);
+document.getElementById("hint-btn").addEventListener("click",showHint);
+document.getElementById("next-btn").addEventListener("click",()=>selectLevel(currentLevel+1));
+document.getElementById("replay-btn").addEventListener("click",()=>{document.getElementById("win-modal").hidden=true;restartLevel();});
+document.getElementById("modal-next-btn").addEventListener("click",()=>{
+  if(currentLevel<LEVELS.length-1) selectLevel(currentLevel+1);
+});
+document.getElementById("win-modal").addEventListener("click",event=>{
+  if(event.target.id==="win-modal" && won) showToast("可以选择再玩一次，或继续下一关。");
+});
+
+/* Development sanity checks: validate every shipped layout for overlap/bounds and solvability. */
+function validateLevel(level){
+  const ps=initialPositions(level);
+  for(let i=0;i<level.cars.length;i++){
+    const car=level.cars[i],[x,y]=ps[i];
+    if(!canPlace(level,ps,i,x,y)) return false;
+    for(let j=i+1;j<level.cars.length;j++){
+      const other=level.cars[j],[ox,oy]=ps[j];
+      for(let a=0;a<car.len;a++){
+        const cx=car.dir==="H"?x+a:x,cy=car.dir==="V"?y+a:y;
+        for(let b=0;b<other.len;b++){
+          const dx=other.dir==="H"?ox+b:ox,dy=other.dir==="V"?oy+b:oy;
+          if(cx===dx && cy===dy) return false;
+        }
+      }
+    }
+  }
+  return !!solveState(level,ps);
+}
+const invalidLevels=LEVELS.filter(level=>!validateLevel(level));
+if(invalidLevels.length) console.error("Invalid puzzle levels:",invalidLevels.map(level=>level.id));
+renderAll();
+</script>
+</body>
+</html>
